@@ -32,6 +32,10 @@ DEFAULT_PAGE_SIZE = QUERY_LIMIT  # maximum number of alerts returned by a single
 HISTORY_LIMIT = 100  # cap the number of alert history entries
 HISTORY_ON_VALUE_CHANGE = True  # history entry for duplicate alerts if value changes
 
+# Out-of-order event handling
+HONOR_SOURCE_TIME = False  # if True, use source createTime to determine event ordering
+LATE_ARRIVAL_TOLERANCE_SECS = 0  # events within this window of last state change processed normally
+
 # MongoDB (deprecated, use DATABASE_URL setting)
 MONGO_URI = 'mongodb://localhost:27017/monitoring'
 MONGO_DATABASE = None  # can be used to override default database, above

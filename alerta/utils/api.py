@@ -54,11 +54,19 @@ def process_alert(alert: Alert) -> Alert:
     try:
         is_duplicate = alert.is_duplicate()
         if is_duplicate:
-            alert = alert.deduplicate(is_duplicate)
+            # Check if this is an out-of-order event
+            if alert.is_late_arrival(is_duplicate):
+                alert = alert.add_late_arrival_to_history(is_duplicate)
+            else:
+                alert = alert.deduplicate(is_duplicate)
         else:
             is_correlated = alert.is_correlated()
             if is_correlated:
-                alert = alert.update(is_correlated)
+                # Check if this is an out-of-order event
+                if alert.is_late_arrival(is_correlated):
+                    alert = alert.add_late_arrival_to_history(is_correlated)
+                else:
+                    alert = alert.update(is_correlated)
             else:
                 alert = alert.create()
     except Exception as e:

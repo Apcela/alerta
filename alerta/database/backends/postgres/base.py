@@ -405,6 +405,25 @@ class Backend(Database):
         """.format(limit=current_app.config['HISTORY_LIMIT'])
         return self._updateone(update, {'id': id, 'like_id': id + '%', 'history': history}, returning=True)
 
+    def add_history_sorted(self, id, history):
+        """Add history entry and re-sort by update_time descending."""
+        # Unnest combined array, sort by update_time desc, limit, then re-aggregate
+        update = """
+            UPDATE alerts
+               SET history=(
+                   SELECT array_agg(sub.h)
+                     FROM (
+                       SELECT h
+                         FROM unnest(%(history)s || history) AS h
+                        ORDER BY (h).update_time DESC
+                        LIMIT {limit}
+                     ) sub
+               )
+             WHERE id=%(id)s OR id LIKE %(like_id)s
+         RETURNING *
+        """.format(limit=current_app.config['HISTORY_LIMIT'])
+        return self._updateone(update, {'id': id, 'like_id': id + '%', 'history': history}, returning=True)
+
     def get_alerts(self, query=None, raw_data=False, history=False, page=None, page_size=None):
         query = query or Query()
         if raw_data and history:

@@ -503,6 +503,26 @@ class Backend(Database):
             return_document=ReturnDocument.AFTER
         )
 
+    def add_history_sorted(self, id, history):
+        """Add history entry and re-sort by updateTime descending."""
+        query = {'_id': {'$regex': '^' + id}}
+
+        # MongoDB's $push with $sort will sort after adding the element
+        update = {
+            '$push': {
+                'history': {
+                    '$each': [history.serialize],
+                    '$sort': {'updateTime': -1},  # sort descending by updateTime
+                    '$slice': current_app.config['HISTORY_LIMIT']
+                }
+            }
+        }
+        return self.get_db().alerts.find_one_and_update(
+            query,
+            update=update,
+            return_document=ReturnDocument.AFTER
+        )
+
     def get_alerts(self, query=None, raw_data=False, history=False, page=None, page_size=None):
         query = query or Query()
         fields = dict()

@@ -151,6 +151,14 @@ class Database(Base):
     def add_history(self, id, history):
         raise NotImplementedError
 
+    def add_history_sorted(self, id, history):
+        """Add history entry and re-sort history by update_time.
+
+        Used for late-arriving events where the history entry needs to be
+        inserted in chronological order based on source timestamp.
+        """
+        raise NotImplementedError
+
     def delete_alert(self, id):
         raise NotImplementedError
 

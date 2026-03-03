@@ -163,6 +163,7 @@ class ChangeType(StrEnum):
     dismiss = 'dismiss'  # note dismissed
     timeout = 'timeout'
     expired = 'expired'
+    late_arrival = 'late_arrival'  # out-of-order event added to history only
 
 
 class NoteType(StrEnum):

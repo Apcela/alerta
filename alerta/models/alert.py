@@ -250,6 +250,43 @@ class Alert:
     def is_flapping(self, window: int = 1800, count: int = 2) -> bool:
         return db.is_flapping(self, window, count)
 
+    def is_late_arrival(self, existing: 'Alert') -> bool:
+        """Check if this incoming event is a late arrival (out-of-order).
+
+        Returns True if HONOR_SOURCE_TIME is enabled and this event's
+        create_time is older than the existing alert's last state change.
+        """
+        if not current_app.config['HONOR_SOURCE_TIME']:
+            return False
+        if not self.create_time or not existing.update_time:
+            return False
+        tolerance = current_app.config['LATE_ARRIVAL_TOLERANCE_SECS']
+        threshold = existing.update_time.timestamp() - tolerance
+        return self.create_time.timestamp() < threshold
+
+    def add_late_arrival_to_history(self, existing: 'Alert') -> 'Alert':
+        """Add this late-arriving event to history without changing alert state.
+
+        This is called when an event arrives out-of-order (its source timestamp
+        is older than the current alert state). The event is recorded in history
+        for audit purposes but does not update the alert's current state.
+        """
+        history = History(
+            id=self.id,
+            event=self.event,
+            severity=self.severity,
+            status=existing.status,  # preserve existing status
+            value=self.value,
+            text=self.text,
+            change_type=ChangeType.late_arrival,
+            update_time=self.create_time,  # use source timestamp for history ordering
+            user=g.login,
+            timeout=self.timeout
+        )
+        db.add_history_sorted(existing.id, history)
+        # Return the existing alert unchanged
+        return Alert.find_by_id(existing.id)
+
     def get_status_and_value(self):
         return [(h.status, h.value) for h in self.get_alert_history(self, page=1, page_size=10) if h.status]
 
