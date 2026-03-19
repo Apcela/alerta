@@ -55,17 +55,17 @@ class OutOfOrderTestCase(unittest.TestCase):
             now = datetime.utcnow()
             older_time = now - timedelta(minutes=10)
 
-            # Simulate an existing alert with recent update_time
+            # Simulate an existing alert with recent source time
             existing = Alert(
                 resource="test-resource",
                 event="test-event",
                 environment="Production",
                 service=["TestService"],
                 severity="critical",
+                create_time=now,
             )
-            existing.update_time = now
 
-            # Simulate incoming event with older create_time
+            # Simulate incoming event with older source time
             incoming = Alert(
                 resource="test-resource",
                 event="test-event",
@@ -88,17 +88,17 @@ class OutOfOrderTestCase(unittest.TestCase):
             now = datetime.utcnow()
             older_time = now - timedelta(minutes=10)
 
-            # Simulate an existing alert with recent update_time
+            # Simulate an existing alert with recent source time
             existing = Alert(
                 resource="test-resource",
                 event="test-event",
                 environment="Production",
                 service=["TestService"],
                 severity="critical",
+                create_time=now,
             )
-            existing.update_time = now
 
-            # Simulate incoming event with older create_time
+            # Simulate incoming event with older source time
             incoming = Alert(
                 resource="test-resource",
                 event="test-event",
@@ -119,17 +119,17 @@ class OutOfOrderTestCase(unittest.TestCase):
             now = datetime.utcnow()
             newer_time = now + timedelta(minutes=10)
 
-            # Simulate an existing alert
+            # Simulate an existing alert with source time = now
             existing = Alert(
                 resource="test-resource",
                 event="test-event",
                 environment="Production",
                 service=["TestService"],
                 severity="critical",
+                create_time=now,
             )
-            existing.update_time = now
 
-            # Simulate incoming event with newer create_time
+            # Simulate incoming event with newer source time
             incoming = Alert(
                 resource="test-resource",
                 event="test-event",
@@ -156,9 +156,9 @@ class OutOfOrderTestCase(unittest.TestCase):
             g.login = "test_user"
 
             now = datetime.utcnow()
-            # Event is 30 seconds before last update - within tolerance
+            # Event source time is 30 seconds before existing source time - within tolerance
             within_tolerance = now - timedelta(seconds=30)
-            # Event is 90 seconds before last update - outside tolerance
+            # Event source time is 90 seconds before existing source time - outside tolerance
             outside_tolerance = now - timedelta(seconds=90)
 
             existing = Alert(
@@ -167,8 +167,8 @@ class OutOfOrderTestCase(unittest.TestCase):
                 environment="Production",
                 service=["TestService"],
                 severity="critical",
+                create_time=now,
             )
-            existing.update_time = now
 
             # Within tolerance - should NOT be late arrival
             incoming_within = Alert(
@@ -207,8 +207,8 @@ class OutOfOrderTestCase(unittest.TestCase):
                 environment="Production",
                 service=["TestService"],
                 severity="critical",
+                create_time=now,
             )
-            existing.update_time = now
 
             # Incoming without create_time (None)
             incoming = Alert(

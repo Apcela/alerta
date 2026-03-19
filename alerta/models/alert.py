@@ -254,14 +254,17 @@ class Alert:
         """Check if this incoming event is a late arrival (out-of-order).
 
         Returns True if HONOR_SOURCE_TIME is enabled and this event's
-        create_time is older than the existing alert's last state change.
+        source time (create_time) is older than the existing alert's
+        source time (create_time). Both sides of the comparison use
+        source timestamps so that pipeline processing delays cannot
+        cause a legitimate in-order event to be misclassified as late.
         """
         if not current_app.config['HONOR_SOURCE_TIME']:
             return False
-        if not self.create_time or not existing.update_time:
+        if not self.create_time or not existing.create_time:
             return False
         tolerance = current_app.config['LATE_ARRIVAL_TOLERANCE_SECS']
-        threshold = existing.update_time.timestamp() - tolerance
+        threshold = existing.create_time.timestamp() - tolerance
         return self.create_time.timestamp() < threshold
 
     def add_late_arrival_to_history(self, existing: 'Alert') -> 'Alert':

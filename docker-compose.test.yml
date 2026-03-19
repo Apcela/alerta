@@ -1,0 +1,45 @@
+services:
+  mongodb:
+    image: mongo:6
+    ports:
+      - 27017:27017
+    ulimits:
+      nofile:
+        soft: 65536
+        hard: 65536
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  postgres:
+    image: postgres:15
+    ports:
+      - 5432:5432
+    environment:
+      POSTGRES_DB: monitoring
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  test:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    depends_on:
+      mongodb:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    environment:
+      - DATABASE_URL=mongodb://mongodb:27017/monitoring
+      - POSTGRES_URL=postgres://postgres:postgres@postgres:5432/monitoring
+    volumes:
+      - .:/app
+    working_dir: /app
+    command: pytest tests/test_alerts.py tests/test_actions.py tests/test_out_of_order.py -v --tb=short
